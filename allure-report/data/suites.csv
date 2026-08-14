@@ -1,0 +1,2 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","4992","@smoke @critical standard_user should successfully login and navigate to inventory page","chromium","2026-08-15","passed","2026-08-15","Sauce Demo Login","auth\standard-login.spec.ts","",""
