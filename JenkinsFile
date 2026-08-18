@@ -13,21 +13,6 @@ pipeline {
             }
         }
 
-        stage('Check Environment') {
-            steps {
-                sh '''
-                    echo "Node version:"
-                    node --version
-
-                    echo "NPM version:"
-                    npm --version
-
-                    echo "Java version:"
-                    java -version
-                '''
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
                 sh '''
