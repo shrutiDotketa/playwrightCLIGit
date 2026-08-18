@@ -22,13 +22,20 @@ jobs:
          npx playwright install --with-deps   
 
       - name: Run tests
-        run: chmod +x node_modules/.bin/playwright && npx playwright test --reporter=junit --output=test-results.xml
+        run: chmod +x node_modules/.bin/playwright && npx playwright test
 
-      - name: Publish test results
+      - name: Upload E2E Test Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: E2E Test Playwright Report
+          path: ./playwright-report/
+          retention-days: 7
+
+      - name: Publish E2E test results
         uses: dorny/test-reporter@v1
         if: always()
         with:
           name: E2E Test Report
-          path: test-results.xml
-          reporter: jest-junit  
-
+          path: ./test-results/*.xml
+          reporter: jest-junit
