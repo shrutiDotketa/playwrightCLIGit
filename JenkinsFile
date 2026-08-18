@@ -1,36 +1,54 @@
 pipeline {
-    agent any
+    agent {
+        label 'ubuntu-latest'
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    options {
+        timestamps()
+        timeout(time: 1, unit: 'HOURS')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
 
     stages {
-
         stage('Checkout') {
             steps {
-                git(
-                    url: 'https://github.com/shrutiDotketa/playwrightCLIGit.git',
-                    credentialsId: 'github-credentials',
-                    branch: 'main'
-                )
+                checkout scm
+            }
+        }
+
+        stage('Set up Node') {
+            steps {
+                script {
+                    sh '''
+                        node --version
+                        npm --version
+                    '''
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    npm ci
-                    npx playwright install --with-deps
-                '''
+                script {
+                    sh '''
+                        npm ci
+                        npx playwright install --with-deps
+                    '''
+                }
             }
         }
 
-        stage('Run Playwright Tests') {
+        stage('Run Tests') {
             steps {
                 script {
-                    env.TEST_RESULT = sh(
-                        script: 'npx playwright test',
-                        returnStatus: true
-                    ).toString()
-
-                    echo "Playwright test exit code: ${env.TEST_RESULT}"
+                    sh '''
+                        chmod +x node_modules/.bin/playwright
+                        npx playwright test
+                    '''
                 }
             }
         }
@@ -38,75 +56,43 @@ pipeline {
         stage('Generate Allure Report') {
             steps {
                 script {
-                    if (fileExists('allure-results')) {
-                        sh '''
-                            npx allure generate allure-results \
-                                --clean \
-                                -o allure-report
-                        '''
-                    } else {
-                        echo 'No allure-results directory found.'
-                    }
+                    sh '''
+                        npx allure generate allure-results --clean -o allure-report
+                    '''
                 }
-            }
-        }
-
-        stage('Publish Allure Report') {
-            steps {
-                script {
-                    if (fileExists('allure-results')) {
-                        allure([
-                            includeProperties: false,
-                            jdk: '',
-                            results: [[path: 'allure-results']]
-                        ])
-                    } else {
-                        echo 'No Allure results to publish.'
-                    }
-                }
-            }
-        }
-
-        stage('Archive Playwright Report') {
-            steps {
-                archiveArtifacts(
-                    artifacts: 'playwright-report/**',
-                    allowEmptyArchive: true,
-                    fingerprint: true
-                )
-            }
-        }
-
-        stage('Archive Allure Report') {
-            steps {
-                archiveArtifacts(
-                    artifacts: 'allure-report/**',
-                    allowEmptyArchive: true,
-                    fingerprint: true
-                )
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts(
-                artifacts: 'test-results/**',
-                allowEmptyArchive: true,
-                fingerprint: true
-            )
+            // Archive Allure results
+            archiveArtifacts artifacts: 'allure-results/**', 
+                             fingerprint: true,
+                             allowEmptyArchive: true
+
+            // Archive Allure report
+            archiveArtifacts artifacts: 'allure-report/**', 
+                             fingerprint: true,
+                             allowEmptyArchive: true
+
+            // Optional: Publish Allure report via plugin (requires Allure plugin installation)
+            // allure([
+            //     includeProperties: false,
+            //     jdk: '',
+            //     results: [[path: 'allure-results']]
+            // ])
+
+            // Clean workspace
+            deleteDir()
         }
 
         success {
-            echo 'Playwright tests passed successfully.'
+            echo 'Pipeline completed successfully!'
         }
 
         failure {
-            echo 'Playwright tests failed.'
-        }
-
-        cleanup {
-            cleanWs()
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
