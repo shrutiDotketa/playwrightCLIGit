@@ -37,5 +37,5 @@ jobs:
         if: always()
         with:
           name: E2E Test Report
-          path: ./test-results/*.xml
+          path: ./test-results/e2e-results.xml
           reporter: jest-junit
