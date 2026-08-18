@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
- stage('E2E Tests') {
+        stage('E2E Tests') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.50.0-jammy'
@@ -11,23 +11,19 @@ pipeline {
                 }
             }
             steps {
-                     sh 'npm ci'
-                    sh 'npx playwright test'
-                }
+                sh 'npm ci'
+                sh 'npx playwright test'
             }
-
             post {
                 always {
                     junit 'test-results/results.xml'
                     publishHTML target: [
-                                         reportDir: 'playwright-report',
-    reportFiles: 'index.html',
-    reportName: 'Playwright E2E Test Report'
+                        reportDir: 'playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Playwright E2E Test Report'
                     ]
                 }
             }
         }
-
-
-
     }
+}
