@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs "NodeJS-20"
-    }
-
     options {
         timestamps()
         timeout(time: 30, unit: 'MINUTES')
@@ -18,7 +14,18 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Node.js and Dependencies') {
+            steps {
+                sh '''
+                    apt-get update
+                    apt-get install -y nodejs npm
+                    node --version
+                    npm --version
+                '''
+            }
+        }
+
+        stage('Install Playwright Dependencies') {
             steps {
                 sh '''
                     npm ci
@@ -27,7 +34,7 @@ pipeline {
             }
         }
 
-        stage('E2E Tests') {
+        stage('Run E2E Tests') {
             steps {
                 sh 'npx playwright test'
             }
