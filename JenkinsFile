@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'NodeJS-20'
-    }
-
     stages {
 
         stage('Checkout') {
@@ -14,6 +10,21 @@ pipeline {
                     credentialsId: 'github-credentials',
                     branch: 'main'
                 )
+            }
+        }
+
+        stage('Check Environment') {
+            steps {
+                sh '''
+                    echo "Node version:"
+                    node --version
+
+                    echo "NPM version:"
+                    npm --version
+
+                    echo "Java version:"
+                    java -version
+                '''
             }
         }
 
@@ -94,8 +105,6 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning workspace...'
-
             archiveArtifacts(
                 artifacts: 'test-results/**',
                 allowEmptyArchive: true,
